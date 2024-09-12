@@ -16,6 +16,21 @@ class MainController extends AbstractController
     #[Route('/', name: 'app_main')]
     public function index(HttpClientInterface $client,EntityManagerInterface $em): Response
     {
+//        $typeAbsences = $em->getRepository(TypeAbsence::class)->findAll();
+
+        $typeAbsences = $em->getRepository(TypeAbsence::class)->findAll();
+
+        dump($typeAbsences);
+
+        return $this->render('main/index.html.twig', [
+            'controller_name' => 'MainController',
+            'TypeAbsences' => $typeAbsences
+
+        ]);
+    }
+
+    private function refreshTypeAbsence(HttpClientInterface $client,EntityManagerInterface $em): void
+    {
         $taboption = [
             'user_login' => 'yanncb',
             'user_password' => '44741c6c9a3dad833026dc3b8a62e38a8341ca52',
@@ -44,17 +59,7 @@ class MainController extends AbstractController
             $type_absence->setActive($object['is_active']);
 
             $em->persist($type_absence);
-            $typeAbsenceIds[] = $object['type_absence_id'];
+            $em->flush();
         }
-
-
-        $em->flush();
-
-        return $this->render('main/index.html.twig', [
-            'controller_name' => $typeAbsenceIds,
-
-        ]);
-
-
     }
 }

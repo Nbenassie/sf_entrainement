@@ -8,15 +8,24 @@
     .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
 </style>
 
-<div class="example-wrapper">
-    <button type="button" class="btn btn-warning">Warning</button>
-    <h1>Hello {{ controller_name }}! ✅</h1>
+    <div class="example-wrapper">
+        <div class="row">
+            {% for absence in TypeAbsences %}
+                <div class="card" style="width: 18rem; margin: 1em;">
+
+                    <div class="card-body">
+                        <h5 class="card-title">{{ absence.Denomination }}</h5>
+                        <p class="card-text">
+                            ID: {{ absence.id }}<br>
+                            Code: {{ absence.CodetypeAbsence }}<br>
+                            Active: {{ absence.Active ? 'Yes' : 'No' }}
+                        </p>
+
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>C:/Users/stagiaire/sf_Entrainement/src/Controller/MainController.php</code></li>
-        <li>Your template at <code>C:/Users/stagiaire/sf_Entrainement/templates/main/index.html.twig</code></li>
-    </ul>
-</div>
 {% endblock %}
