@@ -29,8 +29,16 @@ class MainController extends AbstractController
         ]);
     }
 
-    private function refreshTypeAbsence(HttpClientInterface $client,EntityManagerInterface $em): void
+    #[Route('/refresh-type-absence', name: 'refresh_type_absence', methods: ['POST'])]
+    public function refreshTypeAbsence(HttpClientInterface $client, EntityManagerInterface $em, $options): void
     {
+        $typeAbsences = $em->getRepository(TypeAbsence::class)->findAll();
+        foreach ($typeAbsences as $typeAbsence) {
+            $em->remove($typeAbsence);
+        }
+        $em->flush();
+
+
         $taboption = [
             'user_login' => 'yanncb',
             'user_password' => '44741c6c9a3dad833026dc3b8a62e38a8341ca52',
@@ -39,19 +47,14 @@ class MainController extends AbstractController
             'last_upd' => '0001-00-00 00:00:00'
         ];
 
-        $response = $client->request('POST', 'http://localhost/admin/appli/updateTypeAbsence', [
-            'body' => $taboption,
-            'headers' => [
-                'Content-Type' => 'multipart/form-data'
-            ]
-        ]);
+        $response = $client->request('POST', 'http://localhost/admin/appli/updateTypeAbsence', $options);
 
         $content = $response->getContent();
         $data = json_decode($content, true);
 //        var_dump($data['objects']
 
-
         foreach ($data['objects'] as $object) {
+
             $type_absence = new TypeAbsence();
             $type_absence->setCodetypeAbsence($object['type_absence_id']);
             $type_absence->setCodeTypeAbsence($object['code_type_absence']);
@@ -61,5 +64,6 @@ class MainController extends AbstractController
             $em->persist($type_absence);
             $em->flush();
         }
+    exit();
     }
 }

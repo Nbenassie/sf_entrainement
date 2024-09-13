@@ -9,7 +9,12 @@
 </style>
 
     <div class="example-wrapper">
+
         <div class="row">
+            <form action="{{ path('refresh_type_absence') }}" method="post">
+                <button type="submit" class="btn btn-success">Refresh</button>
+            </form>
+
             {% for absence in TypeAbsences %}
                 <div class="card" style="width: 18rem; margin: 1em;">
 
