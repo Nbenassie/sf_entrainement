@@ -10,11 +10,10 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 
-
 class MainController extends AbstractController
 {
     #[Route('/', name: 'app_main')]
-    public function index(HttpClientInterface $client,EntityManagerInterface $em): Response
+    public function index(HttpClientInterface $client, EntityManagerInterface $em): Response
     {
 //        $typeAbsences = $em->getRepository(TypeAbsence::class)->findAll();
 
@@ -30,13 +29,9 @@ class MainController extends AbstractController
     }
 
     #[Route('/refresh-type-absence', name: 'refresh_type_absence', methods: ['POST'])]
-    public function refreshTypeAbsence(HttpClientInterface $client, EntityManagerInterface $em, $options): void
+    public function refreshTypeAbsence(HttpClientInterface $client, EntityManagerInterface $em)
     {
-        $typeAbsences = $em->getRepository(TypeAbsence::class)->findAll();
-        foreach ($typeAbsences as $typeAbsence) {
-            $em->remove($typeAbsence);
-        }
-        $em->flush();
+
 
 
         $taboption = [
@@ -47,23 +42,48 @@ class MainController extends AbstractController
             'last_upd' => '0001-00-00 00:00:00'
         ];
 
-        $response = $client->request('POST', 'http://localhost/admin/appli/updateTypeAbsence', $options);
+        $response = $client->request('POST', 'http://localhost/admin/appli/updateTypeAbsence', [
+            'body' => $taboption,
+            'headers' => [
+                'Content-Type' => 'multipart/form-data'
+            ]
+        ]);
 
-        $content = $response->getContent();
-        $data = json_decode($content, true);
-//        var_dump($data['objects']
+        if ($response->getStatusCode() == 200) {
 
-        foreach ($data['objects'] as $object) {
+            $content = $response->getContent();
+            $data = json_decode($content, true);
+            if ($data && isset($data['objects'])) {
 
-            $type_absence = new TypeAbsence();
-            $type_absence->setCodetypeAbsence($object['type_absence_id']);
-            $type_absence->setCodeTypeAbsence($object['code_type_absence']);
-            $type_absence->setDenomination($object['name']);
-            $type_absence->setActive($object['is_active']);
 
-            $em->persist($type_absence);
-            $em->flush();
+                $typeAbsences = $em->getRepository(TypeAbsence::class)->findAll();
+                foreach ($typeAbsences as $typeAbsence) {
+                    $em->remove($typeAbsence);
+                }
+                $em->flush();
+
+                foreach ($data['objects'] as $object) {
+
+                    $type_absence = new TypeAbsence();
+                    $type_absence->setCodetypeAbsence($object['type_absence_id']);
+                    $type_absence->setCodeTypeAbsence($object['code_type_absence']);
+                    $type_absence->setDenomination($object['name']);
+                    $type_absence->setActive($object['is_active']);
+
+                    $em->persist($type_absence);
+                    $em->flush();
+
+                }
+            }
+            $resultupdate = 'mise a jour reussie';
         }
-    exit();
+        else {
+            $resultupdate = 'mise a jour échouée';
+        }
+
+        return $this->render('main/retourUpdate.html.twig', [
+            'resultupdate' => $resultupdate,
+
+        ]);
     }
 }
