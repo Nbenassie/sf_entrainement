@@ -22,6 +22,9 @@ class TypeAbsence
     #[ORM\Column]
     private ?bool $Active = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $absenceColor = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -59,6 +62,18 @@ class TypeAbsence
     public function setActive(bool $Active): static
     {
         $this->Active = $Active;
+
+        return $this;
+    }
+
+    public function getAbsenceColor(): ?string
+    {
+        return $this->absenceColor;
+    }
+
+    public function setAbsenceColor(?string $absenceColor): static
+    {
+        $this->absenceColor = $absenceColor;
 
         return $this;
     }

@@ -5,25 +5,34 @@
 {% block body %}
 <style>
     .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
+    .example-wrapper code { padding: 2px 6px; }
+
 </style>
 
     <div class="example-wrapper">
 
         <div class="row">
-            <form action="{{ path('refresh_type_absence') }}" method="post">
-                <button type="submit" class="btn btn-success">Refresh</button>
-            </form>
+            <a href="{{ path('refresh_type_absence') }}">
+                <button  class="btn btn-success">Refresh</button>
+            </a>
+
 
             {% for absence in TypeAbsences %}
-                <div class="card" style="width: 18rem; margin: 1em;">
-
-                    <div class="card-body">
+                <div id="" class="card" style="width: 18rem; margin: 1em; background-color:#{{ absence.absenceColor }};">
+                    <div class="card-body" >
                         <h5 class="card-title">{{ absence.Denomination }}</h5>
                         <p class="card-text">
+
                             ID: {{ absence.id }}<br>
-                            Code: {{ absence.CodetypeAbsence }}<br>
-                            Active: {{ absence.Active ? 'Yes' : 'No' }}
+                            Code: {{ absence.codetypeAbsence }}<br>
+                            Active: {{ absence.Active ? 'Yes' : 'No' }}<br>
+                            color: {{ absence.absenceColor }}
+
+
+                        <form action="{{ path('delete_type_absence') }}" method="POST">
+                            <input name="deleteId" id="deleteId" type="hidden" value="{{ absence.id }}"/>
+                            <button type="submit" class="btn btn-success">Delete</button>
+                        </form>
                         </p>
 
                     </div>
