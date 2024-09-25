@@ -101,8 +101,8 @@ class MainController extends AbstractController
             ]);
         }
         $content = $response->getContent();
+        return $this->redirect($this->generateUrl('app_main'));
     }
-
     /** Fonction de modification de type absence */
     #[Route('/edit-type-absence/{id}', name: 'edit_type_absence')]
     public function editTypeAbsence(Request $request, int $id)
@@ -115,7 +115,6 @@ class MainController extends AbstractController
             /** @var TypeAbsence $result */
             $typeAbsence = $form->getData();
             $reussite = $this->webservicemodif($typeAbsence);
-
             if ($reussite) {
                 $this->em->persist($type_absence);
                 $this->em->flush();
@@ -159,5 +158,5 @@ class MainController extends AbstractController
         }
     }
 }
-
+ 
 

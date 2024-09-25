@@ -10,34 +10,25 @@
             width: 95%;
             font: 18px/1.5 sans-serif;
         }
-
         .example-wrapper code {
             padding: 2px 6px;
         }
-
     </style>
-
     <div class="example-wrapper">
-
         <div class="row">
             <a href="{{ path('refresh_type_absence') }}">
                 <button class="btn btn-success">Refresh</button>
             </a>
-
-
             {% for absence in TypeAbsences %}
                 <div id="" class="card"
                      style="width: 18rem; margin: 1em; background-color:#{{ absence.absenceColor }};">
                     <div class="card-body">
                         <h5 class="card-title">{{ absence.Denomination }}</h5>
                         <p class="card-text">
-
                             ID: {{ absence.id }}<br>
                             Code: {{ absence.codetypeAbsence }}<br>
                             Active: {{ absence.Active ? 'Yes' : 'No' }}<br>
                             color: {{ absence.absenceColor }}
-
-
                         <form action="{{ path('delete_type_absence') }}" method="POST">
                             <input name="deleteId" id="deleteId" type="hidden" value="{{ absence.codetypeAbsence }}"/>
                             <button type="submit" class="btn btn-success">Delete</button>
@@ -45,14 +36,10 @@
                         <a href = "edit-type-absence/{{ absence.id }}">
                             <button class="btn btn-succes">Edit</button>
                         </a>
-{#                   {{ dump( path('edit_type_absence') ~ "/" ~ absence.id ) }}#}
                         </p>
-
                     </div>
                 </div>
             {% endfor %}
         </div>
     </div>
-
-
 {% endblock %}
