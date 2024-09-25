@@ -1,0 +1,17 @@
+{# templates/task/new.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello MainController!{% endblock %}
+
+{% block body %}
+    {{ form(form) }}
+    {% for message in app.flashes('error') %}
+        <div class="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+{#    {{ form_start(form) }}#}
+{#    {{ form_widget(form) }}#}
+{#    <button type="submit" class="btn btn-primary">Valider</button>#}
+{#    {{ form_end(form) }}#}
+{% endblock %}
