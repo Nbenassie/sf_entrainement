@@ -2,10 +2,13 @@
 
 namespace App\Controller;
 
+use App\Form\MainFormType;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\TypeAbsence;
+use mysql_xdevapi\Result;
 use PhpParser\Node\Stmt\If_;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -13,12 +16,22 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class MainController extends AbstractController
 {
+    public HttpClientInterface $client;
+    public EntityManagerInterface $em;
+
+
+    public function __construct(HttpClientInterface $client, EntityManagerInterface $em)
+    {
+        $this->client = $client;
+        $this->em = $em;
+    }
+
     #[Route('/', name: 'app_main')]
-    public function index(HttpClientInterface $client, EntityManagerInterface $em): Response
+    public function index(): Response
     {
 //        $typeAbsences = $em->getRepository(TypeAbsence::class)->findAll();
 
-        $typeAbsences = $em->getRepository(TypeAbsence::class)->findAll();
+        $typeAbsences = $this->em->getRepository(TypeAbsence::class)->findAll();
 
 
         return $this->render('main/index.html.twig', [
@@ -29,7 +42,7 @@ class MainController extends AbstractController
     }
 
     #[Route('/refresh-type-absence', name: 'refresh_type_absence')]
-    public function refreshTypeAbsence(HttpClientInterface $client, EntityManagerInterface $em)
+    public function refreshTypeAbsence()
     {
 
         $taboption = [
@@ -40,7 +53,7 @@ class MainController extends AbstractController
             'last_upd' => '0001-00-00 00:00:00'
         ];
 
-        $response = $client->request('POST', 'http://localhost/admin/appli/updateTypeAbsence', [
+        $response = $this->client->request('POST', 'http://localhost/admin/appli/updateTypeAbsence', [
             'body' => $taboption,
             'headers' => [
                 'Content-Type' => 'multipart/form-data'
@@ -54,11 +67,12 @@ class MainController extends AbstractController
             if ($data && isset($data['objects'])) {
                 dump($response);
 
-                $typeAbsences = $em->getRepository(TypeAbsence::class)->findAll();
+                $typeAbsences = $this->em->getRepository(TypeAbsence::class)->findAll();
                 foreach ($typeAbsences as $typeAbsence) {
-                    $em->remove($typeAbsence);
+                    $this->em->remove($typeAbsence);
+//                    $typeAbsence->color;
                 }
-                $em->flush();
+                $this->em->flush();
 
                 foreach ($data['objects'] as $object) {
 
@@ -68,8 +82,8 @@ class MainController extends AbstractController
                     $type_absence->setActive($object['is_active']);
                     $type_absence->setAbsenceColor($object['color_absence']);
 
-                    $em->persist($type_absence);
-                    $em->flush();
+                    $this->em->persist($type_absence);
+                    $this->em->flush();
 
                 }
             }
@@ -85,33 +99,97 @@ class MainController extends AbstractController
 
 
     #[Route('/delete-type-absence', name: 'delete_type_absence')]
-    public function deleteTypeAbsence(HttpClientInterface $client, EntityManagerInterface $em):void
+    public function deleteTypeAbsence()
     {
 
-        if (isset($_POST['deleteId']) && $_POST['deleteId']>0) {
+        if (isset($_POST['deleteId']) && $_POST['deleteId'] > 0) {
             $id_type_absence = $_POST['deleteId'];
-            if ($typeAbsence = $em->getRepository(TypeAbsence::class)->find($id_type_absence)){
+            var_dump($_POST);
+//            if ($typeAbsence = $em->getRepository(TypeAbsence::class)->find($id_type_absence)){
 
-                $taboption = [
-                    'user_login' => 'yanncb',
-                    'user_password' => '44741c6c9a3dad833026dc3b8a62e38a8341ca52',
-                    'tiers_id' => '15907',
-                    'app_version_code' => '57',
-                    'code_type_absence' => $id_type_absence
-                ];
-                var_dump($id_type_absence);
-            }
-            $response = $client->request('POST', 'http://localhost/admin/appli/deleteTypeAbsence', [
+            $taboption = [
+                'user_login' => 'yanncb',
+                'user_password' => '44741c6c9a3dad833026dc3b8a62e38a8341ca52',
+                'tiers_id' => '15907',
+                'app_version_code' => '57',
+                'code_type_absence' => $id_type_absence
+            ];
+            var_dump($id_type_absence);
+
+            $response = $this->client->request('POST', 'http://localhost/admin/appli/deleteTypeAbsence', [
                 'body' => $taboption,
                 'headers' => [
                     'Content-Type' => 'multipart/form-data'
                 ]
             ]);
-         }
+        }
         $content = $response->getContent();
         var_dump($content);
 
 
         exit();
     }
+
+    #[Route('/edit-type-absence/{id}', name: 'edit_type_absence')]
+    public function editTypeAbsence(Request $request, int $id)
+    {
+
+
+        $type_absence = $this->em->getRepository(TypeAbsence::class)->find($id);
+
+        $form = $this->createForm(MainFormType::class, $type_absence);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            /** @var TypeAbsence $result */
+            $typeAbsence = $form->getData();
+            $reussite = $this->webservicemodif($typeAbsence);
+            if ($reussite) {
+                $this->em->persist($type_absence);
+                $this->em->flush();
+                return $this->redirect($this->generateUrl('app_main'));
+            }
+            else{
+                $response = new Response();
+                $response->setStatusCode(500);
+                return  $this->render(
+                    'main/edit_type_absence.html.twig',
+                    ['form' => $form],
+                    $response
+
+                );
+            }
+
+        }
+
+        return $this->render('main/edit_type_absence.html.twig', [
+            'form' => $form,
+        ]);
+    }
+
+    private function webservicemodif(TypeAbsence $typeAbsence):bool{
+        $taboption = [
+            'user_login' => 'yanncb',
+            'user_password' => '44741c6c9a3dad833026dc3b8a62e38a8341ca52',
+            'tiers_id' => '15907',
+            'app_version_code' => '57',
+            'code_type_absence' => $typeAbsence->getCodetypeAbsence(),
+            'color_absence' => $typeAbsence->getAbsenceColor()
+        ];
+        $response = $this->client->request('POST', 'http://localhost/admin/appli/editTypeAbsence', [
+            'body' => $taboption,
+            'headers' => [
+                'Content-Type' => 'multipart/form-data'
+            ]
+        ]);
+
+        if ($response->getStatusCode() == 200){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
 }
+
+
